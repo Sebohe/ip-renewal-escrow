@@ -1,0 +1,19 @@
+{
+  "name": "subnetdao",
+  "version": "1.0.0",
+  "dependencies": {},
+  "devDependencies": {
+    "openzeppelin-solidity": "^1.12.0",
+    "truffle-hdwallet-provider": "^0.0.6",
+    "web3": "^1.0.0-beta.35"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sebohe/ip-renewal-escrow.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
