@@ -6,7 +6,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract RenewalFeeEscrow {
   using SafeMath for uint;
 
-  mapping (address => uint) accountsReceivable;
+  mapping (address => uint) accountsBalance;
   mapping (address => mapping (address => Bill)) billMapping;
   mapping (address => address[]) subscribersOfPayee;
   mapping (address => address[]) collectorsOfPayer;
@@ -18,10 +18,19 @@ contract RenewalFeeEscrow {
   }
 
   function addBill (address _payableTo, uint _price) external payable {
-    billMapping[msg.sender][_payableTo] = Bill(msg.value, _price, block.number);
+    // there should be a minimum limit on how long the subscription shoudl last
+    // or just verify that the new bill can process for one block
+    require(msg.value > 0);
+    Bill memory bill = Bill(msg.value, _price, block.number);
+    billMapping[msg.sender][_payableTo] = bill;
+    accountsBalance[msg.sender] = msg.value;
+    subscribersOfPayee[_payableTo].push(msg.sender);
+    collectorsOfPayer[msg.sender].push(_payableTo);
   }
 
   function collectMyBills () public {
+
+    require(subscribersOfPayee[msg.sender].length > 0);
 
     for (uint i = 0; i < subscribersOfPayee[msg.sender].length; i++) {
       address payer = subscribersOfPayee[msg.sender][i];
@@ -30,47 +39,51 @@ contract RenewalFeeEscrow {
       uint blocksSinceUpdate = block.number.sub(bill.lastUpdated);
       uint amountOwed = blocksSinceUpdate.mul(bill.perBlock);
 
-      billMapping[payer][msg.sender].lastUpdated = block.number;
-
       // If they have enough to pay the bill in full
-      if (amountOwed <= accountsReceivable[payer]) {
+      if (amountOwed <= accountsBalance[payer]) {
         // Debit their account and credit my account by amountOwed
-        accountsReceivable[payer] = accountsReceivable[payer].sub(amountOwed);
-        accountsReceivable[msg.sender] = accountsReceivable[msg.sender].add(amountOwed);
+        accountsBalance[payer] = accountsBalance[payer].sub(amountOwed);
+        accountsBalance[msg.sender] = accountsBalance[msg.sender].add(amountOwed);
       } else {
         // Transfer remainder of their account to my account
-        accountsReceivable[msg.sender] = accountsReceivable[msg.sender].add(accountsReceivable[payer]);
-        accountsReceivable[payer] = 0;
+        accountsBalance[payer] = accountsBalance[msg.sender].add(accountsBalance[payer]);
+        accountsBalance[payer] = 0;
       }
+
+      billMapping[payer][msg.sender].lastUpdated = block.number;
     }
   }
 
-  function payMyBills () public {
+  function payMyBills () internal {
 
     for (uint i = 0; i < collectorsOfPayer[msg.sender].length; i++) {
-      address payee = collectorsOfPayer[msg.sender][i];
+      address collector = collectorsOfPayer[msg.sender][i];
 
-      Bill bill = billMapping[msg.sender][payee];
+      Bill memory bill = billMapping[msg.sender][collector];
       uint blocksSinceUpdate = block.number.sub(bill.lastUpdated);
       uint amountOwed = blocksSinceUpdate.mul(bill.perBlock);
 
-      bill.lastUpdated = block.number;
+      billMapping[msg.sender][collector].lastUpdated = block.number;
 
       // If I have enough to pay the bill in full
-      if (amountOwed <= accountsReceivable[msg.sender]) {
+      if (amountOwed <= accountsBalance[msg.sender]) {
         // Debit my account and credit their account by amountOwed
-        accountsReceivable[msg.sender] = accountsReceivable[msg.sender].sub(amountOwed);
-        accountsReceivable[payee] = accountsReceivable[payee].add(amountOwed);
+        accountsBalance[msg.sender] = accountsBalance[msg.sender].sub(amountOwed);
+        accountsBalance[collector] = accountsBalance[collector].add(amountOwed);
       } else {
         // Transfer remainder of my account to their account
-        accountsReceivable[msg.sender] = 0;
-        accountsReceivable[payee] = accountsReceivable[payee].add(accountsReceivable[msg.sender]);
+        accountsBalance[collector] = accountsBalance[collector].add(accountsBalance[msg.sender]);
+        accountsBalance[msg.sender] = 0;
       }
+      collector.transfer(accountsBalance[msg.sender]);
     }
   }
 
   function withdrawFromEscrow() public {
     //process payments before withdrawing
+    payMyBills();
+    require(accountsBalance[msg.sender] > 0);
+    msg.sender.transfer(accountsBalance[msg.sender]);
   }
 }
 
