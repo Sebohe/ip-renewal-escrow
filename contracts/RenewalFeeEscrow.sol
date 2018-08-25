@@ -6,13 +6,12 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract RenewalFeeEscrow {
   using SafeMath for uint;
 
-  mapping (address => uint) accountsBalance;
-  mapping (address => mapping (address => Bill)) billMapping;
-  mapping (address => address[]) subscribersOfPayee;
-  mapping (address => address[]) collectorsOfPayer;
+  mapping (address => uint) public accountsBalance;
+  mapping (address => mapping (address => Bill)) public billMapping;
+  mapping (address => address[]) public subscribersOfPayee;
+  mapping (address => address[]) public collectorsOfPayer;
 
   struct Bill {
-    uint account;
     uint perBlock;
     uint lastUpdated;
   }
@@ -20,8 +19,8 @@ contract RenewalFeeEscrow {
   function addBill (address _payableTo, uint _price) external payable {
     // there should be a minimum limit on how long the subscription shoudl last
     // or just verify that the new bill can process for one block
-    require(msg.value > 0);
-    Bill memory bill = Bill(msg.value, _price, block.number);
+    require(msg.value > 0, "No value sent");
+    Bill memory bill = Bill(_price, block.number);
     billMapping[msg.sender][_payableTo] = bill;
     accountsBalance[msg.sender] = msg.value;
     subscribersOfPayee[_payableTo].push(msg.sender);

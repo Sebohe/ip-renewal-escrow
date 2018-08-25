@@ -1,7 +1,5 @@
 const RenewalFeeEscrow = artifacts.require('./RenewalFeeEscrow.sol')
 
-const Web3 = require('web3')
-console.log("HIOHIHIHI", Web3.version)
 
 contract('RenewalFeeEscrow', (accounts) => {
 
@@ -14,7 +12,14 @@ contract('RenewalFeeEscrow', (accounts) => {
   })
 
   it('adds a new bill to mapping', async function() {
-    await contract.addBill(accounts[1], 1*(10**10))
+
+    let txn = {
+      from: accounts[0],
+      value: 1*(10**18)
+    }
+    await contract.addBill(accounts[1], 1*(10**10), txn)
+    let bill = await contract.billMapping(accounts[0], accounts[1])
+    console.log("Bill", bill)
 
     assert()
   })
