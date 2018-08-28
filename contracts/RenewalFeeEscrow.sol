@@ -6,6 +6,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract RenewalFeeEscrow {
   using SafeMath for uint;
 
+  event NewBill(address payer, address collector);
+
   mapping (address => mapping (address => Bill)) public billMapping;
   mapping (address => address[]) public subscribersOfPayee;
   mapping (address => address[]) public collectorsOfPayer;
@@ -17,7 +19,7 @@ contract RenewalFeeEscrow {
     uint lastUpdated;
   }
 
-  address subnetDAO;
+  address public subnetDAO;
   constructor (address _subnetDaoManager) public {
     subnetDAO = _subnetDaoManager;
   }
@@ -28,6 +30,7 @@ contract RenewalFeeEscrow {
     billMapping[msg.sender][_payableTo] = Bill(msg.value, _price, block.number);
     subscribersOfPayee[_payableTo].push(msg.sender);
     collectorsOfPayer[msg.sender].push(_payableTo);
+    emit NewBill(msg.sender, _payableTo);
   }
 
   function collectSubnetFees() public {
