@@ -11,15 +11,12 @@ contract RenewalFeeEscrow {
   mapping (address => mapping (address => Bill)) public billMapping;
   mapping (address => address[]) public subscribersOfPayee;
   mapping (address => address[]) public collectorsOfPayer;
-  uint128 public minimumBlockLease = 1;
 
   struct Bill {
     uint account;
     uint perBlock;
     uint lastUpdated;
   }
-
-
 
   /*
   @notice subnetDAO is going to be the smart contract that has the list of 
@@ -30,10 +27,20 @@ contract RenewalFeeEscrow {
     subnetDAO = _subnetDaoManager;
   }
 
+  function getCountOfSubscribers(address _payee) public view returns (uint) {
+    return subscribersOfPayee[_payee].length;
+  }
+
+  function getCountOfCollectors(address _payer) public view returns (uint) {
+    return collectorsOfPayer[_payer].length;
+  }
+
   function addBill (address _payableTo, uint _price) public payable {
 
-    require(msg.value.mul(_price) > minimumBlockLease);
-    require(billMapping[msg.sender][_payableTo].lastUpdated == 0, "Bill already exists");
+    require(msg.value.mul(_price) > 1);
+    require(
+      billMapping[msg.sender][_payableTo].lastUpdated == 0, "Bill already exists"
+    );
 
     billMapping[msg.sender][_payableTo] = Bill(msg.value, _price, block.number);
     subscribersOfPayee[_payableTo].push(msg.sender);
