@@ -25,7 +25,9 @@ contract RenewalFeeEscrow {
   }
 
   function addBill (address _payableTo, uint _price) public payable {
+
     require(msg.value.mul(_price) > minimumBlockLease);
+    require(billMapping[msg.sender][_payableTo].lastUpdated == 0, "Bill already exists");
 
     billMapping[msg.sender][_payableTo] = Bill(msg.value, _price, block.number);
     subscribersOfPayee[_payableTo].push(msg.sender);
