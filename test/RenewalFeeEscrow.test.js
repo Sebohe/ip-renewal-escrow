@@ -20,7 +20,7 @@ contract('RenewalFeeEscrow', (accounts) => {
     it('Adds a new bill to mapping', async () => {
 
       const receipt = await contract.addBill(
-        subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)}
+        subnetDAO, 1*(10**5), {from: accounts[0], value: 1*(10**10)}
       )
       const event = await expectEvent.inLogs(receipt.logs, 'NewBill', { 
         payer: accounts[0],
@@ -31,9 +31,9 @@ contract('RenewalFeeEscrow', (accounts) => {
     })
 
     it('Will not replace an exsting bill', async () => {
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)})
+      await contract.addBill(subnetDAO, 1*(10**5), {from: accounts[0], value: 1*(10**10)})
       assertRevert(contract.
-        addBill(subnetDAO, 2*(10**10), {from: accounts[0], value: 2*(10**18)})
+        addBill(subnetDAO, 2*(10**5), {from: accounts[0], value: 2*(10**10)})
       )
     })
   })
@@ -50,10 +50,10 @@ contract('RenewalFeeEscrow', (accounts) => {
       contract = await RenewalFeeEscrow.new(subnetDAO)
 
       for (let i = 0; i < subnetDAOUsers; i++) {
-        await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[i], value: 1*(10**18)})
+        await contract.addBill(subnetDAO, 1*(10**5), {from: accounts[i], value: 1*(10**10)})
       }
       for (let i = 0; i < subnetDAOTwoUsers; i++) {
-        await contract.addBill(subnetDAOTwo, 1*(10**10), {from: accounts[i], value: 1*(10**18)})
+        await contract.addBill(subnetDAOTwo, 1*(10**5), {from: accounts[i], value: 1*(10**10)})
       }
     })
 
@@ -94,8 +94,8 @@ contract('RenewalFeeEscrow', (accounts) => {
     let txnCount
     beforeEach(async() => {
       contract = await RenewalFeeEscrow.new(subnetDAO)
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)})
-      await contract.addBill(subnetDAOTwo, 1*(10**9), {from: accounts[0], value: 1*(10**15)})
+      await contract.addBill(subnetDAO, 1*(10**5), {from: accounts[0], value: 1*(10**10)})
+      await contract.addBill(subnetDAOTwo, 1*(10**5), {from: accounts[0], value: 1*(10**15)})
 
       let min = Math.ceil(16)
   		let max = Math.floor(4)
@@ -132,8 +132,8 @@ contract('RenewalFeeEscrow', (accounts) => {
     let txnCount
     beforeEach(async() => {
       contract = await RenewalFeeEscrow.new(subnetDAO)
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)})
-      await contract.addBill(subnetDAOTwo, 1*(10**9), {from: accounts[0], value: 1*(10**15)})
+      await contract.addBill(subnetDAO, 1*(10**5), {from: accounts[0], value: 1*(10**10)})
+      await contract.addBill(subnetDAOTwo, 1*(10**5), {from: accounts[0], value: 1*(10**15)})
 
       let min = Math.ceil(16)
   		let max = Math.floor(4)
