@@ -19,6 +19,12 @@ contract RenewalFeeEscrow {
     uint lastUpdated;
   }
 
+
+
+  /*
+  @notice subnetDAO is going to be the smart contract that has the list of 
+  subnetDAOs. This will get queried like subnetDAO.getMemberList
+  */
   address public subnetDAO;
   constructor (address _subnetDaoManager) public {
     subnetDAO = _subnetDaoManager;
