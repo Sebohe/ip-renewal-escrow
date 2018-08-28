@@ -11,7 +11,34 @@ contract('RenewalFeeEscrow', (accounts) => {
   let subnetDAOTwo = accounts[accounts.length-2]
   let contract
 
-  describe.only('getCountOfSubscribers and getCountOfCollectors', async () => {
+  describe('newBill', async () => {
+
+    beforeEach(async () => {
+      contract = await RenewalFeeEscrow.new(subnetDAO)
+    })
+
+    it('Adds a new bill to mapping', async () => {
+
+      const receipt = await contract.addBill(
+        subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)}
+      )
+      const event = await expectEvent.inLogs(receipt.logs, 'NewBill', { 
+        payer: accounts[0],
+        collector: accounts[9]
+      })
+      event.args.payer.should.eql(accounts[0])
+      event.args.collector.should.eql(subnetDAO)
+    })
+
+    it('Will not replace an exsting bill', async () => {
+      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)})
+      assertRevert(contract.
+        addBill(subnetDAO, 2*(10**10), {from: accounts[0], value: 2*(10**18)})
+      )
+    })
+  })
+
+  describe('getCountOfSubscribers and getCountOfCollectors', async () => {
 
     let min = Math.ceil(7)
     let max = Math.floor(2)
@@ -60,45 +87,6 @@ contract('RenewalFeeEscrow', (accounts) => {
       }
 
     })
-  })
-
-  describe('newBill', async () => {
-
-    beforeEach(async () => {
-      contract = await RenewalFeeEscrow.new(subnetDAO)
-    })
-
-    it('Adds a new bill to mapping', async () => {
-
-      const receipt = await contract.addBill(
-        subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)}
-      )
-      const event = await expectEvent.inLogs(receipt.logs, 'NewBill', { 
-        payer: accounts[0],
-        collector: accounts[9]
-      })
-      event.args.payer.should.eql(accounts[0])
-      event.args.collector.should.eql(subnetDAO)
-    })
-
-    it('Will not replace an exsting bill', async () => {
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)})
-      assertRevert(contract.
-        addBill(subnetDAO, 2*(10**10), {from: accounts[0], value: 2*(10**18)})
-      )
-    })
-
-    it('subscribersOfPayee should have an equal length to txns', async () => {
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[0], value: 1*(10**18)})
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[1], value: 1*(10**18)})
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[2], value: 1*(10**18)})
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[3], value: 1*(10**18)})
-      await contract.addBill(subnetDAO, 1*(10**10), {from: accounts[4], value: 1*(10**18)})
-      const subscribersOfPayee = await contract.subscribersOfPayee(subnetDAO, 2);
-      console.log('HIII', subscribersOfPayee)
-
-    })
-
   })
 
   describe('collectSubnetFees', async () => {

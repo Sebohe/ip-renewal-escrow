@@ -27,14 +27,6 @@ contract RenewalFeeEscrow {
     subnetDAO = _subnetDaoManager;
   }
 
-  function getCountOfSubscribers(address _payee) public view returns (uint) {
-    return subscribersOfPayee[_payee].length;
-  }
-
-  function getCountOfCollectors(address _payer) public view returns (uint) {
-    return collectorsOfPayer[_payer].length;
-  }
-
   function addBill (address _payableTo, uint _price) public payable {
 
     require(msg.value.mul(_price) > 1);
@@ -46,6 +38,14 @@ contract RenewalFeeEscrow {
     subscribersOfPayee[_payableTo].push(msg.sender);
     collectorsOfPayer[msg.sender].push(_payableTo);
     emit NewBill(msg.sender, _payableTo);
+  }
+
+  function getCountOfSubscribers(address _payee) public view returns (uint) {
+    return subscribersOfPayee[_payee].length;
+  }
+
+  function getCountOfCollectors(address _payer) public view returns (uint) {
+    return collectorsOfPayer[_payer].length;
   }
 
   function collectSubnetFees() public {
