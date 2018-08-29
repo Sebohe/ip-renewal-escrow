@@ -1,5 +1,4 @@
 var RenewalFeeEscrow = artifacts.require('./RenewalFeeEscrow.sol')
-console.log("WEB3: ", web3.version.api)
 
 let SUBNETDAO_FOR_RECEIVING_PAYMENTS = ''
 
