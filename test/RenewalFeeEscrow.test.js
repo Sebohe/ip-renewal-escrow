@@ -1,5 +1,6 @@
 const RenewalFeeEscrow = artifacts.require('./RenewalFeeEscrow.sol')
 RenewalFeeEscrow.numberFormat = 'BN'
+const BN = web3.utils.BN
 
 require('chai').should()
 
@@ -95,8 +96,17 @@ contract('RenewalFeeEscrow', (accounts) => {
     let txnCount
     beforeEach(async() => {
       contract = await RenewalFeeEscrow.new(subnetDAO)
-      await contract.addBill(subnetDAO, 1*(10**5), {from: accounts[0], value: 1*(10**10)})
-      await contract.addBill(subnetDAOTwo, 1*(10**5), {from: accounts[0], value: 1*(10**15)})
+
+      let blockFeeOne = 1*(10**9)
+      let accountOne = 1*(10**10)
+      let blockFeeTwo = 1*(10**10)
+      let accountTwo = 13*(10**10)
+
+      // 8 is becasuse accounts[8] is subnetDAOTwo
+      for (var i = 1; i < 8; i++) {
+        await contract.addBill(subnetDAO, blockFeeOne, {from: accounts[i], value: accountOne})
+        await contract.addBill(subnetDAOTwo, blockFeeTwo, {from: accounts[i], value: accountTwo})
+      }
 
       let min = Math.ceil(16)
   		let max = Math.floor(4)
@@ -107,19 +117,45 @@ contract('RenewalFeeEscrow', (accounts) => {
       }
     })
 
-    it(`Revert when Subnet doesn't have subscribers`, async () => {
-			assertRevert(
-				contract.collectSubnetFees({from: accounts[3]})
-			)
+    it('Revert when Subnet doesnt have subscribers', async () => {
+			assertRevert(contract.collectSubnetFees({from: accounts[3]}))
     })
 
-    it('Subnet should have an expected ballance of all of its bills', async () => {
+    it.only('Subnet should have an expected balance of all of its bills', async () => {
+      let payersCount = await contract.getCountOfSubscribers(subnetDAO)
+      payersCount = payersCount.toNumber()
+
+      // Get a list of all the payers
+      let payers = []
+      for (var i = 0; i < payersCount; i++) {
+        payers.push(await contract.subscribersOfPayee(subnetDAO, i))
+      }
+
+      // get all of the bills between DAO and payers
+      let bills = []
+      for (var i = 0; i < payers.length; i ++) {
+        let struct = await contract.billMapping(payers[i], subnetDAO)
+        bills.push({account: struct[0], perBlock: struct[1], lastUpdated: struct[2]})
+      }
+
+      let expectedRevenue = new BN(0)
+      let blockNumber = new BN(await web3.eth.getBlockNumber())
+      for (var i = 0; i < bills.length; i ++) {
+          let blockCount = blockNumber.sub(bills[i].lastUpdated)
+          let temp = bills[i].perBlock.mul(blockCount)
+          expectedRevenue = expectedRevenue.add(temp).add(expectedRevenue)
+      }
+
+      let subnetBalance = web3.utils.toBN(await web3.eth.getBalance(subnetDAO))
+      let expectedNewBalance = expectedRevenue.add(subnetBalance)
+      
+      await contract.collectSubnetFees({from: subnetDAO})
+      let newBalance = web3.utils.toBN(await web3.eth.getBalance(subnetDAO))
+      console.log('EQUALS', expectedNewBalance.eq(newBalance))
+
     })
 
-    it('Account of bill should be zero when it cant afford', async () => {
-    })
-
-    it('Set the account of bill to zero when it cant afford', async () => {
+    it('Set the account of bill to zero when it cant afford payment', async () => {
     })
 
     it('Bill should have lastUpdated with same blockNumber as latest block', async () => {
@@ -150,6 +186,10 @@ contract('RenewalFeeEscrow', (accounts) => {
 
     it('Bill should have lastUpdated with same blockNumber', async () => {
     })
+
+    it('Account of bill should be zero when it cant afford payment', async () => {
+    })
+
 
   })
 })
