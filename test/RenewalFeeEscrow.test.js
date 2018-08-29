@@ -1,6 +1,7 @@
 const RenewalFeeEscrow = artifacts.require('./RenewalFeeEscrow.sol')
+RenewalFeeEscrow.numberFormat = 'BN'
 
-require('chai').use(require('chai-bignumber')(web3.bigNumber)).should()
+require('chai').should()
 
 const expectEvent = require('./helpers/expectEvent.js')
 const { assertRevert } = require('./helpers/assertRevert.js')
@@ -57,7 +58,7 @@ contract('RenewalFeeEscrow', (accounts) => {
       }
     })
 
-    it('Should have the right length', async () => {
+      it('Should have the right length', async () => {
       let subscribers = await contract.getCountOfSubscribers(subnetDAO)
       subscribers.toNumber().should.eql(subnetDAOUsers)
 
