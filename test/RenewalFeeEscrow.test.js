@@ -33,10 +33,23 @@ contract('RenewalFeeEscrow', (accounts) => {
     })
 
     it('Will not replace an exsting bill', async () => {
-      await contract.addBill(subnetDAO, 1*(10**5), {from: accounts[0], value: 1*(10**10)})
+      await contract.addBill(subnetDAO, 1*(10**5), {
+        from: accounts[0], value: 1*(10**10)
+      })
       assertRevert(contract.
         addBill(subnetDAO, 2*(10**5), {from: accounts[0], value: 2*(10**10)})
       )
+    })
+
+    it('Contract ether balance should increase', async () => {
+      let balance = 1*(10**10)
+      await contract.addBill(subnetDAO, 1*(10**5), {
+        from: accounts[0], value: balance
+      })
+
+      let contractBalance = await web3.eth.getBalance(contract.address)
+      contractBalance.should.eql(web3.utils.toBN(balance).toString())
+
     })
   })
 
