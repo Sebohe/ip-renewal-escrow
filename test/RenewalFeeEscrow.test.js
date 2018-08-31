@@ -19,6 +19,14 @@ contract('RenewalFeeEscrow', (accounts) => {
       contract = await RenewalFeeEscrow.new(subnetDAO)
     })
 
+    it('Revert when given a perBlockFee of zero', async () => {
+      assertRevert(contract.addBill(subnetDAO, 0, {value: 2*(10**10)}))
+    })
+
+    it('Revert when no value is sent', async () => {
+      assertRevert(contract.addBill(subnetDAO, 10))
+    })
+
     it('Adds a new bill to mapping', async () => {
 
       const receipt = await contract.addBill(
@@ -216,10 +224,13 @@ contract('RenewalFeeEscrow', (accounts) => {
 
     })
 
-    it('Subscriber should have each of the bills with an expect amount', async () => {
+    it('Bill should have lastUpdated with same blockNumber', async () => {
     })
 
-    it('Bill should have lastUpdated with same blockNumber', async () => {
+    it('Collectors should have increased balance', async () => {
+    })
+
+    it('User account should recover remaining balance', async () => {
     })
 
     it('Account of bill should be zero when it cant afford payment', async () => {
