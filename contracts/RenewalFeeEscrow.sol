@@ -88,7 +88,6 @@ contract RenewalFeeEscrow {
       uint blocksSinceUpdate = block.number.sub(bill.lastUpdated);
       uint amountOwed = blocksSinceUpdate.mul(bill.perBlock);
 
-
       uint transferValue;
 
       // If I have enough to pay the bill in full

@@ -182,7 +182,6 @@ contract('RenewalFeeEscrow', (accounts) => {
 
       let accountOne = 2*(10**10)
       let perBlockFee = 1*(10**10)
-      let subscribersCount = 6
       await contract.addBill(subnetDAO, perBlockFee, {value: accountOne})
 
       // extra txns to run down the counter
@@ -208,6 +207,13 @@ contract('RenewalFeeEscrow', (accounts) => {
     })
 
     it('Bill should have lastUpdated with same blockNumber', async () => {
+      let accountOne = 1*(10**10)
+      let perBlockFee = 1*(10**9)
+      await contract.addBill(subnetDAO, perBlockFee, {value: accountOne})
+      await contract.payMyBills()
+      let bill = await contract.billMapping(accounts[0], subnetDAO)
+
+      assert(bill.lastUpdated.eq(new BN(await web3.eth.getBlockNumber())))
     })
 
     it('Collectors should have increased balance', async () => {
