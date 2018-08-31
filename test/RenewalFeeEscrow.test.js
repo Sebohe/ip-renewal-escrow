@@ -184,14 +184,14 @@ contract('RenewalFeeEscrow', (accounts) => {
 
     it('Set bill account to zero', async () => {
 
-      let accountOne = 2*(10**17)
-      let perBlockFee = 1*(10**17)
+      let accountOne = 2*(10**10)
+      let perBlockFee = 1*(10**10)
       let subscribersCount = 6
       await contract.addBill(subnetDAO, perBlockFee, {
           from: accounts[0], value: accountOne
       })
 
-      // extra txns
+      // extra txns to run down the counter
       for (var i = 0; i < 4; i++) {
         await  web3.eth.sendTransaction({
           from: accounts[1],
