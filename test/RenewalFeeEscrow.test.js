@@ -243,6 +243,24 @@ contract('RenewalFeeEscrow', (accounts) => {
     })
 
     it('Account of bill should be zero when it cant afford payment', async () => {
+
+      let accountOne = 2*(10**10)
+      let perBlockFee = 1*(10**10)
+      await contract.addBill(subnetDAO, perBlockFee, {value: accountOne})
+
+      // extra txns to run up the counter
+      for (var i = 0; i < 4; i++) {
+        await  web3.eth.sendTransaction({
+          from: accounts[1],
+          to: '0x0000000000000000000000000000000000000000',
+          value: 1
+        })
+      }
+
+      await contract.payMyBills()
+      let bill = await contract.billMapping(accounts[0], subnetDAO)
+      bill.account.toString().should.eql('0')
+
     })
 
   })
