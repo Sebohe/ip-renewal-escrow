@@ -7,6 +7,8 @@ contract RenewalFeeEscrow {
   using SafeMath for uint;
 
   event NewBill(address payer, address collector);
+  event Debug(string msg);
+  event DebugInt(string msg, uint i);
 
   mapping (address => mapping (address => Bill)) public billMapping;
   mapping (address => address[]) public subscribersOfPayee;
@@ -51,7 +53,6 @@ contract RenewalFeeEscrow {
   function collectSubnetFees() public {
 
     require(subscribersOfPayee[msg.sender].length > 0);
-
     uint transferValue;
     for (uint i = 0; i < subscribersOfPayee[msg.sender].length; i++) {
       address payer = subscribersOfPayee[msg.sender][i];
@@ -75,7 +76,7 @@ contract RenewalFeeEscrow {
     }
 
     // check for reentrancy attack
-    msg.sender.transfer(transferValue);
+    address(msg.sender).transfer(transferValue);
   }
 
   function payMyBills () public {
