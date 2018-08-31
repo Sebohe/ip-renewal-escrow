@@ -52,6 +52,9 @@ contract RenewalFeeEscrow {
 
   function topOfBill(address _payee) public payable {
     require(msg.value != 0);
+    require(
+      billMapping[msg.sender][_payee].lastUpdated != 0, "Bill needs to be added first"
+    );
     uint newValue = billMapping[msg.sender][_payee].account.add(msg.value);
     billMapping[msg.sender][_payee].account = newValue;
   }

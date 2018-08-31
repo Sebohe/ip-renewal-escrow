@@ -106,6 +106,35 @@ contract('RenewalFeeEscrow', (accounts) => {
     })
   })
 
+  describe('topOfBill', async () => {
+    beforeEach(async () => {
+      contract = await RenewalFeeEscrow.new(subnetDAO)
+    })
+
+    it('Revert when value is zero', async () => {
+      await contract.addBill(subnetDAO, 1*(10**16), {value: 1*(10**10)})
+      assertRevert(contract.topOfBill(subnetDAO))
+
+    })
+
+    it('Revert if bill does not exist', async () => {
+      await contract.addBill(subnetDAO, 1*(10**16), {value: 1*(10**10)})
+      assertRevert(contract.topOfBill(subnetDAO, {from: accounts[1], value: 1*(10**10)}))
+    })
+
+    it('Inccrease bill by corresponding amount', async () => {
+      let account =  1*(10**10)
+      await contract.addBill(subnetDAO, 1*(10**9), {value: account})
+      await contract.topOfBill(subnetDAO, {value: account})
+
+      let total = new BN(account*2)
+
+      let bill = await contract.billMapping(accounts[0], subnetDAO)
+      assert(bill.account.eq(total))
+    })
+
+  })
+
   describe('collectSubnetFees', async () => {
 
     beforeEach(async () => {
