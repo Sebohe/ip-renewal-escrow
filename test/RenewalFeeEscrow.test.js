@@ -184,7 +184,7 @@ contract('RenewalFeeEscrow', (accounts) => {
       let perBlockFee = 1*(10**10)
       await contract.addBill(subnetDAO, perBlockFee, {value: accountOne})
 
-      // extra txns to run down the counter
+      // extra txns to run up the counter
       for (var i = 0; i < 4; i++) {
         await  web3.eth.sendTransaction({
           from: accounts[1],
@@ -217,14 +217,33 @@ contract('RenewalFeeEscrow', (accounts) => {
     })
 
     it('Collectors should have increased balance', async () => {
-    })
+      let accountOne = 1*(10**10)
+      let perBlockFee = 1*(10**9)
+      await contract.addBill(subnetDAO, perBlockFee, {value: accountOne})
 
-    it('User account should recover remaining balance', async () => {
+      // extra txns to run up the counter
+      let blockCount = 5
+      for (var i = 0; i < blockCount; i++) {
+        await  web3.eth.sendTransaction({
+          from: accounts[1],
+          to: '0x0000000000000000000000000000000000000000',
+          value: 1
+        })
+      }
+
+      let previousBalance = new BN(await web3.eth.getBalance(subnetDAO))
+      // the +1 is for the payMyBills txn block number
+      let expectedNewBalance = new BN(perBlockFee).mul(new BN(blockCount + 1))
+      // the i prefix is for inplace
+      expectedNewBalance.iadd(previousBalance)
+
+      await contract.payMyBills()
+
+      new BN(await web3.eth.getBalance(subnetDAO)).eq(expectedNewBalance).should.eql(true)
     })
 
     it('Account of bill should be zero when it cant afford payment', async () => {
     })
-
 
   })
 })
