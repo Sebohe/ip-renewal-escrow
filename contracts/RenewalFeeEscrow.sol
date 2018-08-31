@@ -50,6 +50,12 @@ contract RenewalFeeEscrow {
     return collectorsOfPayer[_payer].length;
   }
 
+  function topOfBill(address _payee) public payable {
+    require(msg.value != 0);
+    uint newValue = billMapping[msg.sender][_payee].account.add(msg.value);
+    billMapping[msg.sender][_payee].account = newValue;
+  }
+
   function collectSubnetFees() public {
 
     require(subscribersOfPayee[msg.sender].length > 0);
