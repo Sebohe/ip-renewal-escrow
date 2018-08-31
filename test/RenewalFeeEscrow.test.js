@@ -140,6 +140,7 @@ contract('RenewalFeeEscrow', (accounts) => {
       let bill = await contract.billMapping(accounts[0], subnetDAO)
 
       const txn = await contract.collectSubnetFees({from: subnetDAO})
+
       let txnCost = txn.receipt.gasUsed*(await web3.eth.getGasPrice())
       txnCost = new BN(txnCost)
 
@@ -148,8 +149,7 @@ contract('RenewalFeeEscrow', (accounts) => {
       let expectedRevenue = bill.perBlock.mul(blockDelta)
       let expectedNewBalance = expectedRevenue.add(previousBalance).sub(txnCost)
 
-      let balance = new BN(await web3.eth.getBalance(subnetDAO))
-      balance.eq(expectedNewBalance).should.eql(true)
+      new BN(await web3.eth.getBalance(subnetDAO)).eq(expectedNewBalance).should.eql(true)
     })
 
     it('Collect revenue from multiple bills', async () => {
