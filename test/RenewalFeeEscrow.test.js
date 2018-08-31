@@ -152,63 +152,33 @@ contract('RenewalFeeEscrow', (accounts) => {
       balance.eq(expectedNewBalance).should.eql(true)
     })
 
-      // Get a list of all the payers
-    it('collect revenue from multiple bills', async () => {
+    it('Collect revenue from multiple bills', async () => {
 
-      await contract.addBill(subnetDAO, 1*(10**16), {
-          from: accounts[0], value: 1*(10**18) 
-      })
-
-      let accountOne = 1*(10**16)
+      let accountOne = 1*(10**17)
       let perBlockFee = 1*(10**15)
-
-      // i starts at 1 because account[0] already has a bill
-      for (var i = 1; i < 6; i++) {
+      let subscribersCount = 6
+      for (var i = 0; i < subscribersCount; i++) {
         await contract.addBill(subnetDAO, perBlockFee, {
             from: accounts[i], value: accountOne
         })
       }
-
-      let txnCount = 10
-      for (var i = 0; i < txnCount ; i++) {
-        web3.eth.sendTransaction({
-          from: accounts[0],
-          to: '0xcc2d4df9701f1afcd2b8c810a7eca69a7fd84e28',
-          value: 1
-        })
-      }
-
-      // get all subscribers addresses
-      let payers = []
-      payersCount = await contract.getCountOfSubscribers(subnetDAO)
-      for (var i = 0; i < payersCount.toNumber(); i++) {
-        payers.push(await contract.subscribersOfPayee(subnetDAO, i))
-      }
-
-      // get all of the bills to each corresponding addresses
-      let bills = []
-      for (var i = 0; i < payers.length; i++) {
-        bills.push(await contract.billMapping(payers[i], subnetDAO))
+      // Helper function that determines the amount
+      // of block dues for accounts since adding a new bill
+      // adds a new transaction
+      const recursiveSum = count => {
+        if (count === 1) return 1
+        return recursiveSum(count - 1) + count
       }
 
       let previousBalance = new BN(await web3.eth.getBalance(subnetDAO))
-      //**** Actual contract call
       const txn = await contract.collectSubnetFees({from: subnetDAO})
-      //****
-      let txnCost = txn.receipt.gasUsed*(await web3.eth.getGasPrice())
-      txnCost = new BN(txnCost)
+      const txnCost = new BN(txn.receipt.gasUsed*(await web3.eth.getGasPrice()))
+      const billCount = new BN(recursiveSum(subscribersCount))
+      let expectedNewBalance = new BN(perBlockFee).mul(billCount)
+        .add(previousBalance).sub(txnCost)
 
-      expectedRevenue = new BN(0)
-      let blockNumber = new BN(await web3.eth.getBlockNumber)
-      for (var i = 0; i < bills.length; i++) {
-        let blockDelta = blockNumber.sub(bill.lastUpdated)
-        bill.perBlock.mul(blockDelta)
-
-      }
-      
-      console.log(bills)
-
-      assert(true)
+      let balance = new BN(await web3.eth.getBalance(subnetDAO))
+      balance.eq(expectedNewBalance).should.eql(true)
     })
 
   })
