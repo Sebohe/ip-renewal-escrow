@@ -171,14 +171,38 @@ contract('RenewalFeeEscrow', (accounts) => {
       }
 
       let previousBalance = new BN(await web3.eth.getBalance(subnetDAO))
+
       const txn = await contract.collectSubnetFees({from: subnetDAO})
+
       const txnCost = new BN(txn.receipt.gasUsed*(await web3.eth.getGasPrice()))
       const billCount = new BN(recursiveSum(subscribersCount))
       let expectedNewBalance = new BN(perBlockFee).mul(billCount)
         .add(previousBalance).sub(txnCost)
 
-      let balance = new BN(await web3.eth.getBalance(subnetDAO))
-      balance.eq(expectedNewBalance).should.eql(true)
+      new BN(await web3.eth.getBalance(subnetDAO)).eq(expectedNewBalance).should.eql(true)
+    })
+
+    it('Set bill account to zero', async () => {
+
+      let accountOne = 2*(10**17)
+      let perBlockFee = 1*(10**17)
+      let subscribersCount = 6
+      await contract.addBill(subnetDAO, perBlockFee, {
+          from: accounts[0], value: accountOne
+      })
+
+      // extra txns
+      for (var i = 0; i < 4; i++) {
+        await  web3.eth.sendTransaction({
+          from: accounts[1],
+          to: '0x0000000000000000000000000000000000000000',
+          value: 1
+        })
+      }
+
+      await contract.collectSubnetFees({from: subnetDAO})
+      let bill = await contract.billMapping(accounts[0], subnetDAO)
+      bill.account.toString().should.eql('0')
     })
 
   })
