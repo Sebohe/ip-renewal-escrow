@@ -50,7 +50,7 @@ contract RenewalFeeEscrow {
     return collectorsOfPayer[_payer].length;
   }
 
-  function topOfBill(address _payee) public payable {
+  function topOffBill(address _payee) public payable {
     require(msg.value != 0);
     require(
       billMapping[msg.sender][_payee].lastUpdated != 0, "Bill needs to be added first"
@@ -97,16 +97,12 @@ contract RenewalFeeEscrow {
   {
     uint transferValue;
     Bill memory bill = billMapping[subscriber][collector];
-    uint blocksSinceUpdate = block.number.sub(bill.lastUpdated);
-    uint amountOwed = blocksSinceUpdate.mul(bill.perBlock);
+    uint amountOwed = block.number.sub(bill.lastUpdated).mul(bill.perBlock);
 
-    // If I have enough to pay the bill in full
     if (amountOwed <= bill.account) {
-      // Debit my account and credit their account by amountOwed
       billMapping[subscriber][collector].account = bill.account.sub(amountOwed);
       transferValue = amountOwed;
     } else {
-      // Transfer remainder of my account to their account
       transferValue = bill.account;
       billMapping[subscriber][collector].account = 0;
     }
