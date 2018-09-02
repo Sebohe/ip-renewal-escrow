@@ -62,29 +62,16 @@ contract RenewalFeeEscrow {
   function collectSubnetFees() public {
 
     require(subscribersOfPayee[msg.sender].length > 0);
-    uint transferValue;
+    uint transferValue = 0;
+
     for (uint i = 0; i < subscribersOfPayee[msg.sender].length; i++) {
-      address payer = subscribersOfPayee[msg.sender][i];
 
-      Bill memory bill = billMapping[payer][msg.sender];
-      uint blocksSinceUpdate = block.number.sub(bill.lastUpdated);
-      uint amountOwed = blocksSinceUpdate.mul(bill.perBlock);
-
-      // If they have enough to pay the bill in full
-      if (amountOwed <= bill.account) {
-        // Debit their account and credit my account by amountOwed
-        billMapping[payer][msg.sender].account = bill.account.sub(amountOwed);
-        transferValue = transferValue.add(amountOwed);
-      } else {
-        // Transfer remainder of their account to my account
-        transferValue = transferValue.add(bill.account);
-        billMapping[payer][msg.sender].account = 0;
-      }
-
-      billMapping[payer][msg.sender].lastUpdated = block.number;
+      transferValue = transferValue.add(updateBills(
+        msg.sender, 
+        subscribersOfPayee[msg.sender][i]
+      ));
     }
 
-    // check for reentrancy attack
     address(msg.sender).transfer(transferValue);
   }
 
@@ -93,26 +80,38 @@ contract RenewalFeeEscrow {
     for (uint i = 0; i < collectorsOfPayer[msg.sender].length; i++) {
       address collector = collectorsOfPayer[msg.sender][i];
 
-      Bill memory bill = billMapping[msg.sender][collector];
-      uint blocksSinceUpdate = block.number.sub(bill.lastUpdated);
-      uint amountOwed = blocksSinceUpdate.mul(bill.perBlock);
-
-      uint transferValue;
-
-      // If I have enough to pay the bill in full
-      if (amountOwed <= bill.account) {
-        // Debit my account and credit their account by amountOwed
-        billMapping[msg.sender][collector].account = bill.account.sub(amountOwed);
-        transferValue = amountOwed;
-      } else {
-        // Transfer remainder of my account to their account
-        transferValue = bill.account;
-        billMapping[msg.sender][collector].account = 0;
-      }
+      uint transferValue = updateBills(
+        collector, 
+        msg.sender
+      );
 
       collector.transfer(transferValue);
-      billMapping[msg.sender][collector].lastUpdated = block.number;
     }
+  }
+
+  function updateBills(
+    address collector,
+    address subscriber
+  )
+    internal returns(uint) 
+  {
+    uint transferValue;
+    Bill memory bill = billMapping[subscriber][collector];
+    uint blocksSinceUpdate = block.number.sub(bill.lastUpdated);
+    uint amountOwed = blocksSinceUpdate.mul(bill.perBlock);
+
+    // If I have enough to pay the bill in full
+    if (amountOwed <= bill.account) {
+      // Debit my account and credit their account by amountOwed
+      billMapping[subscriber][collector].account = bill.account.sub(amountOwed);
+      transferValue = amountOwed;
+    } else {
+      // Transfer remainder of my account to their account
+      transferValue = bill.account;
+      billMapping[subscriber][collector].account = 0;
+    }
+    billMapping[subscriber][collector].lastUpdated = block.number;
+    return transferValue;
   }
 }
 
